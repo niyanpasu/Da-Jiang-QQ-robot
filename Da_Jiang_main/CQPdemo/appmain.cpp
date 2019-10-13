@@ -9,9 +9,9 @@
 #include "cqp.h"
 #include "appmain.h" //应用AppID等信息，请正确填写，否则酷Q可能无法加载
 
-//#include"dajiang.h"
+#include"dajiang.h"
 #include<time.h>
-#include<fstream>
+#include<cstring>
 
 using namespace std;
 
@@ -88,9 +88,9 @@ CQEVENT(int32_t, __eventDisable, 0)() {
 */
 CQEVENT(int32_t, __eventPrivateMsg, 24)(int32_t subType, int32_t msgId, int64_t fromQQ, const char *themsg, int32_t font) {
 	string msg = themsg;
+
 	/*string msglast;
 
-	
 	ifstream read("data.txt",ios::_Nocreate);
 	if (read.fail()) { return EVENT_BLOCK; }
 	read >> msglast;
@@ -106,59 +106,57 @@ CQEVENT(int32_t, __eventPrivateMsg, 24)(int32_t subType, int32_t msgId, int64_t 
 	write.close();*/
 
 	//版本信息
-	if (msg == "-help")
-	{CQ_sendPrivateMsg(ac, fromQQ, "自己摸索的说");return EVENT_BLOCK;}
-	if (msg == "-about")
-	{CQ_sendPrivateMsg(ac, fromQQ, "version:0.0.2\nversion_id:2\nauthor:Bao Peize");return EVENT_BLOCK;}
-
+	if(about(msg)!= "Dajiang_not_found"){
+		CQ_sendPrivateMsg(ac, fromQQ, (char*)about(msg).c_str());
+		return EVENT_BLOCK;
+	}
+	
 	//问好
-	if (NULL != strstr((char*)msg.c_str(), "大酱早安"))
-	{CQ_sendPrivateMsg(ac, fromQQ, "おはよ");return EVENT_BLOCK;}
-	else if (NULL != strstr((char*)msg.c_str(), "大酱晚安"))
-	{CQ_sendPrivateMsg(ac, fromQQ, "おやすみ");return EVENT_BLOCK;}
-	else if (NULL != (strstr((char*)msg.c_str(), "大酱中午好") || strstr((char*)msg.c_str(), "大酱午安")))
-	{CQ_sendPrivateMsg(ac, fromQQ, "中午好鸭");return EVENT_BLOCK;}
-	else if (NULL != strstr((char*)msg.c_str(), "大酱"))
-	{CQ_sendPrivateMsg(ac, fromQQ, "はい");}
-	else if (NULL != (strstr((char*)msg.c_str(), "社会") || strstr((char*)msg.c_str(), "可怕")))
-	{CQ_sendPrivateMsg(ac, fromQQ, "社会社会[CQ:face,id=178]");return EVENT_BLOCK;}
-	else if (NULL != (strstr((char*)msg.c_str(), "AMD") || strstr((char*)msg.c_str(), "amd")))
-	{CQ_sendPrivateMsg(ac, fromQQ, "Intel牛逼！[CQ:face,id=178]");return EVENT_BLOCK;}
+	if (hello(msg) != "Dajiang_not_found") {
+		CQ_sendPrivateMsg(ac, fromQQ, (char*)hello(msg).c_str());
+		return EVENT_BLOCK;
+	}
+	/*else if (NULL != strstr((char*)msg.c_str(), "大酱")){
+		CQ_sendPrivateMsg(ac, fromQQ, "はい");
+	}*/
 	else {}
 
+	//色图
+	int setu_state = setu_get(msg);
+	if (setu_state) {
+		if (1 == setu_state) {
+			msg = "";
+			msg.insert(0, "]");
+			msg.insert(0, "setu.jpg");
+			msg.insert(0, "[CQ:image,file=");
+			CQ_sendPrivateMsg(ac, fromQQ, (char*)msg.c_str());
+			char *setu_photo = "E:\\酷Q Pro\\data\\image\\setu.jpg";
+			remove(setu_photo);
+			return EVENT_BLOCK;
+		}
+		if (2 == setu_state) {
+			CQ_sendPrivateMsg(ac, fromQQ, "大酱的服务器没内存放小姐姐了喵，让⑨去买点硬盘吧");
+			return EVENT_BLOCK;
+		}
+		if (3 == setu_state) {
+			CQ_sendPrivateMsg(ac, fromQQ, "大酱没网了嘤嘤嘤");
+			return EVENT_BLOCK;
+		}
+		if (4 == setu_state) {
+			CQ_sendPrivateMsg(ac, fromQQ, "瑟图服务器爆炸惹_(:3」∠)_");
+			return EVENT_BLOCK;
+		}
+	}
+
 	//复读
-	if ("复读" == msg.substr(0, 4))
-	{msg = msg.substr(4);CQ_sendPrivateMsg(ac, fromQQ, (char*)msg.c_str());return EVENT_BLOCK;}
+	if (repeat_Private(msg,fromQQ) != "Dajiang_not_found") {
+		CQ_sendPrivateMsg(ac, fromQQ, (char*)repeat_Private(msg,fromQQ).c_str());
+		return EVENT_BLOCK;
+	}
 
 	//随机选择
-	if ("/随机选择" == msg.substr(0, 9))
-	{
-		msg.erase(0, 10);				//gb10830编码一个字符占两个字节
-		int i = 0, flag = 0;			//i记录‘|’个数，flag记录‘|’下标
-		for (i = -1;flag >= 0;i++)
-		{
-			flag = msg.find('|', flag + 1);
-		}
-		srand((unsigned)time(NULL));
-		int choose = rand() % (i + 1);	//choose记录大酱的选择（从0开始）
-		i = 0, flag = 0;				//i和flag重新初始化
-		for (i = 0, flag = 0;i < choose;i++)
-		{
-			flag = msg.find('|', flag + 1);
-		}
-		msg = msg.substr(flag);
-		if ('|' == msg[0])				//除去可能的前置'|'
-		{
-			msg = msg.substr(1);
-		}
-		flag = msg.find('|');			//除去可能的后置'|'
-		if (-1 != flag)
-		{
-			msg = msg.substr(0, flag);
-		}
-		msg = "嗯，大酱选择了" + msg;
-		msg += "的说(≧▽≦)";
-		CQ_sendPrivateMsg(ac, fromQQ, (char*)msg.c_str());
+	if (random_choice(msg) != "Dajiang_not_found") {
+		CQ_sendPrivateMsg(ac, fromQQ, (char*)random_choice(msg).c_str());
 		return EVENT_BLOCK;
 	}
 
@@ -181,96 +179,85 @@ CQEVENT(int32_t, __eventGroupMsg, 36)(int32_t subType, int32_t msgId, int64_t fr
 	string msg = themsg;
 
 	//版本信息
-	if (msg == "-help")
-	{CQ_sendGroupMsg(ac, fromGroup, "自己摸索的说");return EVENT_BLOCK;}
-	if (msg == "-about")
-	{CQ_sendGroupMsg(ac, fromGroup, "version:0.0.2\nversion_id:2\nauthor:Bao Peize");return EVENT_BLOCK;}
-
-	//禁言(迫害狗群员)
-	if (fromGroup == 719120383)
-	{
-		if (NULL != (strstr((char*)msg.c_str(), "cxk")|| (strstr((char*)msg.c_str(), "菜") && strstr((char*)msg.c_str(), "虚") && strstr((char*)msg.c_str(), "鲲"))))
-		{CQ_setGroupBan(ac,fromGroup,fromQQ,60);CQ_sendGroupMsg(ac, fromGroup, "[CQ:face,id=178]");return EVENT_BLOCK;}
-		if (NULL != (strstr((char*)msg.c_str(), "esu")|| strstr((char*)msg.c_str(), "pronhub")|| strstr((char*)msg.c_str(), "SSR")|| strstr((char*)msg.c_str(), "V2Ray")))
-		{CQ_setGroupBan(ac, fromGroup, fromQQ, 60);CQ_sendGroupMsg(ac, fromGroup, "[CQ:face,id=178]");return EVENT_BLOCK;}
-		if (NULL != (strstr((char*)msg.c_str(), "平胸怪") || strstr((char*)msg.c_str(), "野兽先辈") || strstr((char*)msg.c_str(), "昏睡红茶") || strstr((char*)msg.c_str(), "雷普")))
-		{CQ_setGroupBan(ac, fromGroup, fromQQ, 60);CQ_sendGroupMsg(ac, fromGroup, "[CQ:face,id=178]");return EVENT_BLOCK;}
-		if (NULL != (strstr((char*)msg.c_str(), "比利") || strstr((char*)msg.c_str(), "哲学") || strstr((char*)msg.c_str(), "出柜")))
-		{CQ_setGroupBan(ac, fromGroup, fromQQ, 60);CQ_sendGroupMsg(ac, fromGroup, "[CQ:face,id=178]");return EVENT_BLOCK;}
-		//if (NULL != (strstr((char*)msg.c_str(), "南") && strstr((char*)msg.c_str(), "应")))
-		//{CQ_setGroupBan(ac, fromGroup, fromQQ, 60);CQ_sendGroupMsg(ac, fromGroup, "[CQ:face,id=178]");return EVENT_BLOCK;}
-		if (NULL != (strstr((char*)msg.c_str(), "p社") || strstr((char*)msg.c_str(), "P社") || strstr((char*)msg.c_str(), "鬼畜音mad") || strstr((char*)msg.c_str(), "光复汉室")))
-		{CQ_setGroupBan(ac, fromGroup, fromQQ, 60);CQ_sendGroupMsg(ac, fromGroup, "[CQ:face,id=178]");return EVENT_BLOCK;}
-		if (NULL != (strstr((char*)msg.c_str(), "天神下凡1v4") || strstr((char*)msg.c_str(), "天神下凡1V4")|| strstr((char*)msg.c_str(), "匡扶汉室")))
-		{CQ_setGroupBan(ac, fromGroup, fromQQ, 60);CQ_sendGroupMsg(ac, fromGroup, "[CQ:face,id=178]");return EVENT_BLOCK;}
-		if (NULL != (strstr((char*)msg.c_str(), "六四")))
-		{CQ_setGroupBan(ac, fromGroup, fromQQ, 60);CQ_sendGroupMsg(ac, fromGroup, "[CQ:face,id=178]");return EVENT_BLOCK;}
-		if (NULL != (strstr((char*)msg.c_str(), "杰哥不要") || strstr((char*)msg.c_str(), "带带大师兄")))
-		{CQ_setGroupBan(ac, fromGroup, fromQQ, 60);CQ_sendGroupMsg(ac, fromGroup, "[CQ:face,id=178]");return EVENT_BLOCK;}
-	}
-
-	//问好
-	if (NULL != strstr((char*)msg.c_str(), "大酱早安"))
-		{CQ_sendGroupMsg(ac, fromGroup, "おはよ");return EVENT_BLOCK;}
-	else if (NULL != strstr((char*)msg.c_str(), "大酱晚安"))
-		{CQ_sendGroupMsg(ac, fromGroup, "おやすみ");return EVENT_BLOCK;}
-	else if (NULL != (strstr((char*)msg.c_str(), "大酱中午好")|| strstr((char*)msg.c_str(), "大酱午安")))
-		{CQ_sendGroupMsg(ac, fromGroup, "中午好鸭");return EVENT_BLOCK;}
-	else if (NULL != strstr((char*)msg.c_str(), "大酱"))
-		{CQ_sendGroupMsg(ac, fromGroup, "はい");}
-	else if (NULL != (strstr((char*)msg.c_str(), "社会") || strstr((char*)msg.c_str(), "可怕")))
-	{CQ_sendGroupMsg(ac, fromGroup, "社会社会[CQ:face,id=178]");return EVENT_BLOCK;}
-	else if (NULL != (strstr((char*)msg.c_str(), "AMD")|| strstr((char*)msg.c_str(), "amd")))
-		{CQ_sendGroupMsg(ac, fromGroup, "Intel牛逼！[CQ:face,id=178]");return EVENT_BLOCK;}
-	else if (NULL != strstr((char*)msg.c_str(), "鲍"))
-		{CQ_sendGroupMsg(ac, fromGroup, "不许骂我家⑨，混蛋[CQ:face,id=31]");
-		srand((unsigned)time(NULL));
-		if (rand() % 2 && fromGroup == 719120383)
-			{CQ_setGroupBan(ac, fromGroup, fromQQ, 60);CQ_sendGroupMsg(ac, fromGroup, "[CQ:face,id=178]");}
-		return EVENT_BLOCK;}
-	else {}
-
-	//复读
-	if ("复读" == msg.substr(0, 4))
-	{msg = msg.substr(4);msg.insert(0, "] \n");msg.insert(0, std::to_string(fromQQ));msg.insert(0, "[CQ:at,qq=");CQ_sendGroupMsg(ac, fromGroup, (char*)msg.c_str());return EVENT_BLOCK;}
-
-	//随机选择
-	if ("/随机选择" == msg.substr(0, 9))
-	{
-		msg.erase(0, 10);				//gb10830编码一个字符占两个字节
-		int i = 0, flag = 0;			//i记录‘|’个数，flag记录‘|’下标
-		for (i = -1;flag >= 0;i++)
-		{
-			flag = msg.find('|', flag + 1);
-		}
-		srand((unsigned)time(NULL));
-		int choose = rand() % (i + 1);	//choose记录大酱的选择（从0开始）
-		i = 0, flag = 0;				//i和flag重新初始化
-		for (i = 0,flag = 0;i < choose;i++)
-		{
-			flag = msg.find('|', flag + 1);
-		}
-		msg = msg.substr(flag);
-		if ('|' == msg[0])				//除去可能的前置'|'
-		{
-			msg = msg.substr(1);
-		}
-		flag = msg.find('|');			//除去可能的后置'|'
-		if (-1 != flag)
-		{
-			msg = msg.substr(0, flag);
-		}
-		msg = "嗯，大酱选择了" + msg;
-		msg += "的说(≧▽≦)";
-		CQ_sendGroupMsg(ac, fromGroup, (char*)msg.c_str());
+	if (about(msg) != "Dajiang_not_found") {
+		CQ_sendGroupMsg(ac, fromGroup, (char*)about(msg).c_str());
 		return EVENT_BLOCK;
 	}
 
+		/*//禁言(迫害狗群员)
+		if (ban(msg,fromGroup,fromQQ)) {
+			CQ_setGroupBan(ac, fromGroup, fromQQ, ban(msg, fromGroup, fromQQ));
+			CQ_sendGroupMsg(ac, fromGroup, "[CQ:face,id=178]");
+			return EVENT_BLOCK;
+		}*/
+
+	//问好
+	if (hello(msg) != "Dajiang_not_found") {
+		CQ_sendGroupMsg(ac, fromGroup, (char*)hello(msg).c_str());
+		return EVENT_BLOCK;
+	}
+	/*else if (NULL != strstr((char*)msg.c_str(), "大酱")){
+		CQ_sendGroupMsg(ac, fromGroup, "はい");
+	}*/
+
+	//色图
+	int setu_state = setu_get(msg);
+	if (setu_state) {
+		if (1 == setu_state) {
+			msg = "";
+			msg.insert(0, "]");
+			msg.insert(0, "setu.jpg");
+			msg.insert(0, "[CQ:image,file=");
+			msg.insert(0, "] ");
+			msg.insert(0, std::to_string(fromQQ));
+			msg.insert(0, "[CQ:at,qq=");
+			CQ_sendGroupMsg(ac, fromGroup, (char*)msg.c_str());
+			char *setu_photo = "E:\\酷Q Pro\\data\\image\\setu.jpg";
+			remove(setu_photo);
+			return EVENT_BLOCK;
+		}
+		if (2 == setu_state) {
+			CQ_sendGroupMsg(ac, fromGroup, "大酱的服务器没内存放小姐姐了喵，让⑨去买点硬盘吧");
+			return EVENT_BLOCK;
+		}
+		if (3 == setu_state) {
+			CQ_sendGroupMsg(ac, fromGroup, "大酱没网了嘤嘤嘤");
+			return EVENT_BLOCK;
+		}
+		if (4 == setu_state) {
+			CQ_sendGroupMsg(ac, fromGroup, "瑟图服务器爆炸惹_(:3」∠)_");
+			return EVENT_BLOCK;
+		}
+	}
+	/*
+	//工具人模块
+	else if (719120383 == fromGroup && std::regex_search(msg, std::regex("((.*)[鲍佨苞笣砲蚫骲龅鮑齙](.*)[沛伂呸琣婄珮][泽齚泎謮沢則](.*))|((.*)[鲍佨苞笣砲蚫骲龅鮑齙](.*)[沛]+[泽](.*))"))){	//群主暴政(滑稽）
+		CQ_sendGroupMsg(ac, fromGroup, "不许骂我家⑨，混蛋[CQ:face,id=31]");	//必定回骂(手动滑稽)
+		srand((unsigned)time(NULL));	//随机数种子
+		if (rand() % 2 && fromGroup == 719120383){	//50%概率调用禁言函数
+			CQ_setGroupBan(ac, fromGroup, fromQQ, 60);	//禁言60秒
+			CQ_sendGroupMsg(ac, fromGroup, "[CQ:face,id=178]");	//发个滑稽
+		}
+		return EVENT_BLOCK;
+	}
+	else {}
+	*/
+	//复读
+	if (repeat(msg, fromQQ) != "Dajiang_not_found") {
+		CQ_sendGroupMsg(ac, fromGroup, (char*)repeat(msg, fromQQ).c_str());
+		return EVENT_BLOCK;
+	}
+
+	//随机选择
+	if (random_choice(msg) != "Dajiang_not_found") {
+		CQ_sendGroupMsg(ac, fromGroup, (char*)random_choice(msg).c_str());
+		return EVENT_BLOCK;
+	}
+	
 	//随机复读
 	srand((unsigned)time(NULL));
 	if (!(rand() % 100))
 	{CQ_sendGroupMsg(ac, fromGroup, (char*)msg.c_str());return EVENT_BLOCK;}
-
 
 	return EVENT_IGNORE; //关于返回值说明, 见“_eventPrivateMsg”函数
 }
@@ -283,59 +270,60 @@ CQEVENT(int32_t, __eventDiscussMsg, 32)(int32_t subType, int32_t msgId, int64_t 
 	string msg = themsg;
 
 	//版本信息
-	if (msg == "-help")
-	{CQ_sendDiscussMsg(ac, fromDiscuss, "自己摸索的说");return EVENT_BLOCK;}
-	if (msg == "-about")
-	{CQ_sendDiscussMsg(ac, fromDiscuss, "version:0.0.2\nversion_id:2\nauthor:Bao Peize");return EVENT_BLOCK;}
+	if (about(msg) != "Dajiang_not_found") {
+		CQ_sendDiscussMsg(ac, fromDiscuss, (char*)about(msg).c_str());
+		return EVENT_BLOCK;
+	}
 
 	//问好
-	if (NULL != strstr((char*)msg.c_str(), "大酱早安"))
-	{CQ_sendDiscussMsg(ac, fromDiscuss, "おはよ");return EVENT_BLOCK;}
-	else if (NULL != strstr((char*)msg.c_str(), "大酱晚安"))
-	{CQ_sendDiscussMsg(ac, fromDiscuss, "おやすみ");return EVENT_BLOCK;}
-	else if (NULL != (strstr((char*)msg.c_str(), "大酱中午好") || strstr((char*)msg.c_str(), "大酱午安")))
-	{CQ_sendDiscussMsg(ac, fromDiscuss, "中午好鸭");return EVENT_BLOCK;}
-	else if (NULL != strstr((char*)msg.c_str(), "大酱"))
-	{CQ_sendDiscussMsg(ac, fromDiscuss, "はい");}
-	else if (NULL != (strstr((char*)msg.c_str(), "社会") || strstr((char*)msg.c_str(), "可怕")))
-	{CQ_sendDiscussMsg(ac, fromDiscuss, "社会社会[CQ:face,id=178]");return EVENT_BLOCK;}
-	else if (NULL != (strstr((char*)msg.c_str(), "AMD") || strstr((char*)msg.c_str(), "amd")))
-	{CQ_sendDiscussMsg(ac, fromDiscuss, "Intel牛逼！[CQ:face,id=178]");return EVENT_BLOCK;}
+	if (hello(msg) != "Dajiang_not_found") {
+		CQ_sendDiscussMsg(ac, fromDiscuss, (char*)hello(msg).c_str());
+		return EVENT_BLOCK;
+	}
+	/*else if (NULL != strstr((char*)msg.c_str(), "大酱")) {
+		CQ_sendDiscussMsg(ac, fromDiscuss, "はい");
+	}*/
 	else {}
 
+	//色图
+	int setu_state = setu_get(msg);
+	if (setu_state) {
+		if (1 == setu_state) {
+			msg = "";
+			msg.insert(0, "]");
+			msg.insert(0, "setu.jpg");
+			msg.insert(0, "[CQ:image,file=");
+			msg.insert(0, "] ");
+			msg.insert(0, std::to_string(fromQQ));
+			msg.insert(0, "[CQ:at,qq=");
+			CQ_sendDiscussMsg(ac, fromDiscuss, (char*)msg.c_str());
+			char *setu_photo = "E:\\酷Q Pro\\data\\image\\setu.jpg";
+			remove(setu_photo);
+			return EVENT_BLOCK;
+		}
+		if (2 == setu_state) {
+			CQ_sendDiscussMsg(ac, fromDiscuss, "大酱的服务器没内存放小姐姐了喵，让⑨去买点硬盘吧");
+			return EVENT_BLOCK;
+		}
+		if (3 == setu_state) {
+			CQ_sendDiscussMsg(ac, fromDiscuss, "大酱没网了嘤嘤嘤");
+			return EVENT_BLOCK;
+		}
+		if (4 == setu_state) {
+			CQ_sendDiscussMsg(ac, fromDiscuss, "瑟图服务器爆炸惹_(:3」∠)_");
+			return EVENT_BLOCK;
+		}
+	}
+
 	//复读
-	if ("复读" == msg.substr(0, 4))
-	{msg = msg.substr(4);msg.insert(0, "] \n");msg.insert(0, std::to_string(fromQQ));msg.insert(0, "[CQ:at,qq=");CQ_sendDiscussMsg(ac, fromDiscuss, (char*)msg.c_str());return EVENT_BLOCK;}
+	if (repeat(msg, fromQQ) != "Dajiang_not_found") {
+		CQ_sendDiscussMsg(ac, fromDiscuss, (char*)repeat(msg, fromQQ).c_str());
+		return EVENT_BLOCK;
+	}
 
 	//随机选择
-	if ("/随机选择" == msg.substr(0, 9))
-	{
-		msg.erase(0, 10);				//gb10830编码一个字符占两个字节
-		int i = 0, flag = 0;			//i记录‘|’个数，flag记录‘|’下标
-		for (i = -1;flag >= 0;i++)
-		{
-			flag = msg.find('|', flag + 1);
-		}
-		srand((unsigned)time(NULL));
-		int choose = rand() % (i + 1);	//choose记录大酱的选择（从0开始）
-		i = 0, flag = 0;				//i和flag重新初始化
-		for (i = 0, flag = 0;i < choose;i++)
-		{
-			flag = msg.find('|', flag + 1);
-		}
-		msg = msg.substr(flag);
-		if ('|' == msg[0])				//除去可能的前置'|'
-		{
-			msg = msg.substr(1);
-		}
-		flag = msg.find('|');			//除去可能的后置'|'
-		if (-1 != flag)
-		{
-			msg = msg.substr(0, flag);
-		}
-		msg = "嗯，大酱选择了" + msg;
-		msg += "的说(≧▽≦)";
-		CQ_sendDiscussMsg(ac, fromDiscuss, (char*)msg.c_str());
+	if (random_choice(msg) != "Dajiang_not_found") {
+		CQ_sendDiscussMsg(ac, fromDiscuss, (char*)random_choice(msg).c_str());
 		return EVENT_BLOCK;
 	}
 
